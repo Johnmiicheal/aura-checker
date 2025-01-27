@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import Image from 'next/image'
 import { Skeleton } from "@/components/ui/skeleton"
+import toast from 'react-hot-toast'
 
 interface Models {
   name: string
@@ -118,12 +119,43 @@ export default function Home() {
     body: { auraUser, auraSubject, model: selectedModel }
   })
 
+  const validateUsernames = (user: string, subject: string) => {
+    if (user.toLowerCase() === subject.toLowerCase()) {
+      toast.error("Comparing yourself to yourself? That's deep... but try someone else!", {
+        style: {
+          background: '#27272a',
+          color: '#fafafa',
+          border: '1px solid #3f3f46',
+        },
+        iconTheme: {
+          primary: '#71717a',
+          secondary: '#18181b',
+        },
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const cleanUsername = e.target.value.replace('@', '').trim();
+    setAuraUser(cleanUsername);
+  };
+
+  const handleSubjectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const cleanUsername = e.target.value.replace('@', '').trim();
+    setAuraSubject(cleanUsername);
+  };
+
   const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim()) return
-    setIsSubmitted(true)
-    handleSubmit(e)
-  }
+    e.preventDefault();
+    if (!input.trim()) return;
+
+    if (!validateUsernames(auraUser, auraSubject)) return;
+
+    setIsSubmitted(true);
+    handleSubmit(e);
+  };
 
   const resetForm = () => {
     stop()
@@ -216,22 +248,27 @@ export default function Home() {
                           </SelectContent>
                         </Select>
                       </div>
+                      <div className="relative">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">@</div>
+                        <Input
+                          placeholder="Your X(Twitter) username"
+                          value={auraUser}
+                          onChange={handleUserChange}
+                          className="bg-zinc-800/50 border-zinc-700/60 text-zinc-200 h-12 sm:h-11 text-base sm:text-sm pl-8"
+                          aria-label="Your X(Twitter) username"
+                        />
+                      </div>
+                      <div className="relative">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">@</div>
+                        <Input
+                          placeholder="Their X(Twitter) username"
+                          value={auraSubject}
+                          onChange={handleSubjectChange}
+                          className="bg-zinc-800/50 border-zinc-700/60 text-zinc-200 h-12 sm:h-11 text-base sm:text-sm pl-8"
+                          aria-label="Their X(Twitter) username"
+                        />
+                      </div>
 
-                      <Input
-                        placeholder="Your X(Twitter) @username"
-                        value={auraUser}
-                        onChange={(e) => setAuraUser(e.target.value)}
-                        className="bg-zinc-800/50 border-zinc-700/60 text-zinc-200 h-12 sm:h-11 text-base sm:text-sm"
-                        aria-label="Your X(Twitter) username"
-                      />
-
-                      <Input
-                        placeholder="Their X(Twitter) @username"
-                        value={auraSubject}
-                        onChange={(e) => setAuraSubject(e.target.value)}
-                        className="bg-zinc-800/50 border-zinc-700/60 text-zinc-200 h-12 sm:h-11 text-base sm:text-sm"
-                        aria-label="Their X(Twitter) username"
-                      />
 
                       <Textarea
                         placeholder="Describe anything you may have in common..."
