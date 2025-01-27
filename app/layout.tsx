@@ -1,6 +1,7 @@
 import './globals.css'
 import { GeistSans } from 'geist/font/sans'
 import { Analytics } from "@vercel/analytics/react"
+import { Toaster } from "react-hot-toast"
 
 export const metadata = {
   title: 'Aura Checker',
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${GeistSans.className} min-h-screen bg-black`}>
+        <Toaster position="top-center" />
         {children}
         <Analytics />
       </body>
