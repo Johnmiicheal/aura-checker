@@ -38,8 +38,10 @@ export async function POST(req: Request) {
     
     Analyze the vibes between @${auraUser} and @${auraSubject} based on their digital energy.
     
-    You will only respond with a tabular analysis of the vibes between the two users and give them aura points on a scale of 1-10 on each section.
-    Do not write any text, just the tabular analysis: Attributes, @${auraUser}, @${auraSubject}, Aura Points.
+    You will only respond with a tabular analysis of the Aura Points between the two users.
+    Give explaination of the attributes in the table itself: Attributes, @${auraUser}, @${auraSubject}.
+    Like explaination..points..
+    Do not give any other information other than the table.
     
     Posts by @${auraUser}:
     ${userPosts.results.map(p => `${p.text}`).join('\n')}

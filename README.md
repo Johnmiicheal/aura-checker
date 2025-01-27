@@ -21,11 +21,11 @@ An AI-powered tool that helps you analyze and compare your digital aura with X(T
 
 1. **Clone the repository**
     ```bash
-    git clone https://github.com/zaidmukaddam/breakup-planner.git
+    git clone https://github.com/zaidmukaddam/aura-check.git
     ```
 2. **Navigate to the project directory**
     ```bash
-    cd breakup-planner
+    cd aura-check
     ```
 3. **Install dependencies**
     ```bash
