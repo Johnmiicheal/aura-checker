@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Github } from 'lucide-react'
 import Marked, { ReactRenderer } from 'marked-react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -446,9 +446,17 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="w-full max-w-3xl py-12 border-t border-zinc-700/60">
-        <div className="text-center text-zinc-400 px-4">
-          <p>Crafted with 💖 to help Gen-Z discover and balance their digital aura</p>
+      <footer className="w-full max-w-3xl py-12">
+        <div className="flex justify-between items-center px-4">
+          <p className="text-zinc-400">© {new Date().getFullYear()} Zaid Mukaddam</p>
+          <a
+            href="https://git.new/aura"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-zinc-400 hover:text-zinc-200 transition-colors"
+          >
+            <Github className="w-4 h-4" />
+          </a>
         </div>
       </footer>
     </div>

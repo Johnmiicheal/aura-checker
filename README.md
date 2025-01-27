@@ -21,11 +21,11 @@ An AI-powered tool that helps you analyze and compare your digital aura with X(T
 
 1. **Clone the repository**
     ```bash
-    git clone https://github.com/zaidmukaddam/aura-check.git
+    git clone https://github.com/zaidmukaddam/aura-checker.git
     ```
 2. **Navigate to the project directory**
     ```bash
-    cd aura-check
+    cd aura-checker
     ```
 3. **Install dependencies**
     ```bash
