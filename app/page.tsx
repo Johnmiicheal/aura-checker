@@ -113,7 +113,6 @@ export default function Home() {
   const [loadingIdx, setLoadingIdx] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [selectedModel, setSelectedModel] = useState(models[0].modelId)
-  const [partialReasoning, setPartialReasoning] = useState("")
 
   const { messages, input, handleInputChange, handleSubmit, setMessages, stop, isLoading } = useChat({
     api: '/api/check-aura',
@@ -135,7 +134,6 @@ export default function Home() {
     setIsSubmitted(false)
     setMessages([])
     setLoadingIdx(0)
-    setPartialReasoning('')
   }
 
   // Loading messages effect
