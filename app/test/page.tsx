@@ -118,7 +118,9 @@ export default function Home() {
     const scrollRef = useRef<HTMLDivElement>(null)
     const [selectedModel, setSelectedModel] = useState(models[0].modelId)
 
-    const { messages, input, handleInputChange, handleSubmit, setMessages, stop, isLoading } = useChat({
+    const [isLoading, setIsLoading] = useState(false)
+
+    const { messages, input, handleInputChange, handleSubmit, setMessages, stop } = useChat({
         api: '/api/check-aura',
         body: { auraUser, auraSubject, model: selectedModel }
     })
@@ -151,12 +153,16 @@ export default function Home() {
         setAuraSubject(cleanUsername);
     };
 
-    const onSubmit = (e: React.FormEvent) => {
+    const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         // if (!input.trim()) return;
 
         // if (!validateUsernames(auraUser, auraSubject)) return;
 
+        setIsLoading(true)
+
+        await new Promise(resolve => setTimeout(resolve, 3000))
+        setIsLoading(false)
         setIsSubmitted(true);
         // handleSubmit(e);
     };
@@ -199,22 +205,42 @@ export default function Home() {
                 <div className='relative w-full md:max-w-[800px]'>
                     <div className="bg-[#1F2433] backdrop-blur-sm border-[5px] border-[#293040] p-3 pt-2 rounded-[32px] relative overflow-hidden">
 
-                        {!isSubmitted && (
-                            <div className='absolute top-0 left-0 w-full flex justify-between h-0 overflow-visible'>
-                                <CardTopLeftCover className={`scale-[65%] md:scale-100 origin-top-left ${isSubmitted ? '' : ''}`} />
-                                <CardTopRightCover className='relative -right-1 scale-[65%] md:scale-100 origin-top-right' />
-                            </div>
-                        )}
 
-                        {isSubmitted && (
+                        <motion.div
+                            animate={{ height: isLoading ? '260px' : '162px' }}
+                            className='absolute top-0 left-0 w-full flex overflow-visible justify-between'
+                        >
+                            <CardTopLeftCover
+                                preserveAspectRatio='none'
+                                className={`relative scale-[65%] h-full md:scale-100 origin-top-left shrink-0 ${!isSubmitted ? 'left-0' : '-left-[300px]'} duration-500`}
+                            />
+                            <CardTopRightCover
+                                preserveAspectRatio='none'
+                                className={`relative h-full scale-[65%] md:scale-100 origin-top-right ${!isSubmitted ? 'right-0' : '-right-[300px]'} duration-500`}
+                            />
+                        </motion.div>
+
+                        {!isLoading && isSubmitted && (
                             <div className='absolute top-0 left-0 w-full flex justify-between h-full overflow-visible'>
-                                <CardLeftSideCover className={`h-full w-[62px] md:w-auto relative -left-10 md:-left-14 rotate-180`} />
-                                <CardRightSideCover className={`h-full w-[62px] md:w-auto relative -right-10 md:-right-14 rotate-180`} />
+                                <motion.div
+                                    initial={{ x: "-200px" }}
+                                    animate={{ x: "-40px" }}
+                                    transition={{ duration: 0.5, ease: "easeInOut", delay: 0.2 }}
+                                >
+                                    <CardLeftSideCover className="h-full w-[62px] md:w-auto relative rotate-180" />
+                                </motion.div>
+                                <motion.div
+                                    initial={{ x: "200px" }}
+                                    animate={{ x: "40px" }}
+                                    transition={{ duration: 0.5, ease: "easeInOut", delay: 0.2 }}
+                                >
+                                    <CardRightSideCover className="h-full w-[62px] md:w-auto relative rotate-180" />
+                                </motion.div>
                             </div>
                         )}
 
                         {/* header */}
-                        <div className='w-full flex flex-col gap-6 items-center mt-6'>
+                        <div className='w-full flex flex-col gap-6 items-center my-6'>
                             <Image
                                 src={Logo}
                                 alt='Aura Logo'
@@ -253,8 +279,10 @@ export default function Home() {
                         </div>
 
                         {/* form */}
-                        {!isSubmitted && (
-                            <form action="" className='flex flex-col gap-2 pt-10'>
+                        {!isLoading && !isSubmitted && (
+                            <form
+                                className='flex flex-col gap-2 pt-5'
+                            >
                                 <div className="relative flex gap-0 items-center w-full bg-[#2E3547] rounded-xl px-3 h-12">
                                     <span className="shrink-0">Your:</span>
                                     <Input
@@ -293,31 +321,55 @@ export default function Home() {
                         )}
 
                     </div>
-                    {isSubmitted && (
-                        <div className='w-full flex flex-col items-center'>
-                            <CardLeftSideHandles className='absolute top-0 -left-[76px] -z-10' />
-                            <CardRightSideHandles className='absolute top-0 -right-[76px] -z-10' />
+
+                    {!isLoading && isSubmitted && (
+                        <div className='w-full flex items-center justify-between absolute top-0 left-0 -z-10'>
+                            <motion.div
+                                initial={{ x: "-20px", opacity: 0 }}
+                                animate={{ x: "-76px", opacity: 1 }}
+                                transition={{ duration: 0.5, ease: "easeInOut", delay: 0.5 }}
+                            >
+                                <CardLeftSideHandles />
+                            </motion.div>
+                            <motion.div
+                                initial={{ x: "20px", opacity: 0 }}
+                                animate={{ x: "76px", opacity: 1 }}
+                                transition={{ duration: 0.5, ease: "easeInOut", delay: 0.5 }}
+                            >
+                                <CardRightSideHandles />
+                            </motion.div>
                         </div>
                     )}
                 </div>
 
 
-                {!isSubmitted && (
-                    <button onClick={onSubmit} style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }} className='max-w-[600px] mt-3 w-full h-12 rounded-xl text-white'>
+                {!isLoading && !isSubmitted && (
+                    <button
+                        onClick={onSubmit}
+                        style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }} className='max-w-[800px] mt-3 w-full h-12 rounded-xl text-white'
+                    >
                         Generate Aura Report ++
                     </button>
                 )}
 
-                {!isSubmitted && (
-                    <div className='w-full py-10 p-4 flex flex-col gap-3 items-center'>
+                {isLoading && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className='w-full py-10 p-4 flex flex-col gap-3 items-center'
+                    >
                         <p className='opacity-60'>Generating Report...</p>
                         <div className='relative w-full md:max-w-[600px] mx-auto h-3 rounded-full bg-white/10'>
-                            <div
-                                className='w-[75%] h-full rounded-full' style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }}
+                            <motion.div
+                                className='h-full rounded-full' style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }}
+                                initial={{ width: '0%' }}
+                                animate={{ width: '90%' }}
+                                exit={{ width: '100%' }}
+                                transition={{ duration: isLoading ? 3 : 0.3 }}
                             />
                         </div>
 
-                    </div>
+                    </motion.div>
                 )}
 
                 {isSubmitted && (
