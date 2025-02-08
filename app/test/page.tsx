@@ -17,6 +17,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import toast from 'react-hot-toast'
 import Logo from '@/assets/Logo.png'
 import { CardTopLeftCover, CardTopRightCover } from '@/assets/CardTopCover'
+import { CardLeftSideCover, CardRightSideCover } from '@/assets/CardSideCover'
+import { CardLeftSideHandles, CardRightSideHandles } from '@/assets/CardSideHandles'
 
 interface Models {
     name: string
@@ -151,12 +153,12 @@ export default function Home() {
 
     const onSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim()) return;
+        // if (!input.trim()) return;
 
-        if (!validateUsernames(auraUser, auraSubject)) return;
+        // if (!validateUsernames(auraUser, auraSubject)) return;
 
         setIsSubmitted(true);
-        handleSubmit(e);
+        // handleSubmit(e);
     };
 
     const resetForm = () => {
@@ -192,72 +194,160 @@ export default function Home() {
 
     return (
         <div className="min-h-screen flex flex-col items-center px-4 sm:px-6 py-20 text-sm md:text-[15px]">
-            <div className="bg-[#1F2433] backdrop-blur-sm border-[5px] border-[#293040] p-3 pt-2 space-y-4 sm:space-y-6 rounded-3xl w-full md:max-w-[600px] relative overflow-hidden">
 
-                <div className='absolute top-0 left-0 w-full h-full flex justify-between'>
-                    <CardTopLeftCover className='scale-[65%] md:scale-100 origin-top-left' />
-                    <CardTopRightCover className='relative -right-1 scale-[65%] md:scale-100 origin-top-right' />
+            <div className='w-full flex flex-col items-center relative z-10'>
+                <div className='relative w-full md:max-w-[800px]'>
+                    <div className="bg-[#1F2433] backdrop-blur-sm border-[5px] border-[#293040] p-3 pt-2 rounded-[32px] relative overflow-hidden">
+
+                        {!isSubmitted && (
+                            <div className='absolute top-0 left-0 w-full flex justify-between h-0 overflow-visible'>
+                                <CardTopLeftCover className={`scale-[65%] md:scale-100 origin-top-left ${isSubmitted ? '' : ''}`} />
+                                <CardTopRightCover className='relative -right-1 scale-[65%] md:scale-100 origin-top-right' />
+                            </div>
+                        )}
+
+                        {isSubmitted && (
+                            <div className='absolute top-0 left-0 w-full flex justify-between h-full overflow-visible'>
+                                <CardLeftSideCover className={`h-full w-[62px] md:w-auto relative -left-10 md:-left-14 rotate-180`} />
+                                <CardRightSideCover className={`h-full w-[62px] md:w-auto relative -right-10 md:-right-14 rotate-180`} />
+                            </div>
+                        )}
+
+                        {/* header */}
+                        <div className='w-full flex flex-col gap-6 items-center mt-6'>
+                            <Image
+                                src={Logo}
+                                alt='Aura Logo'
+                                width={200}
+                                height={200}
+                                className='w-20 h-auto'
+                            />
+
+                            <div className='flex flex-col gap-1 items-center'>
+                                <h1 className='text-2xl font-light'>Aura Checker</h1>
+                                <p className='opacity-70 font-light'>Compare your Aura with Twitter posts</p>
+                            </div>
+
+                            {/*  */}
+                            {isSubmitted && (
+                                <div className='flex flex-col md:flex-row p-4 w-full gap-8 mt-4 max-w-[600px]'>
+                                    <div className='flex flex-col items-center p-4 bg-[#2E3547] rounded-2xl w-full gap-3'>
+                                        <p className='text-4xl font-medium'>75</p>
+                                        <div className='flex flex-col items-center gap-1'>
+                                            <p className='text-sm text-[#B1B6C0] opacity-60'>Aura points</p>
+                                            <p className='opacity-60'>@kartik_builds</p>
+                                        </div>
+                                    </div>
+
+                                    <div className='flex flex-col items-center p-4 bg-[#2E3547] rounded-2xl w-full gap-3' style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }}>
+                                        <p className='text-4xl font-medium'>90</p>
+                                        <div className='flex flex-col items-center gap-1'>
+                                            <p className='text-sm opacity-70'>Aura points</p>
+                                            <p>@kartik_builds</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+
+                        </div>
+
+                        {/* form */}
+                        {!isSubmitted && (
+                            <form action="" className='flex flex-col gap-2 pt-10'>
+                                <div className="relative flex gap-0 items-center w-full bg-[#2E3547] rounded-xl px-3 h-12">
+                                    <span className="shrink-0">Your:</span>
+                                    <Input
+                                        placeholder="@username"
+                                        value={auraUser}
+                                        onChange={handleUserChange}
+                                        className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 px-2"
+                                        aria-label="Your X(Twitter) username"
+                                    />
+                                    <span className="absolute right-4 text-[#B1B6C0] opacity-70 text-xs font-medium">{`(X/Twitter)`}</span>
+                                </div>
+
+                                <div className="relative flex gap-0 items-center w-full bg-[#2E3547] rounded-xl px-3 h-12">
+                                    <span className="shrink-0">Their:</span>
+                                    <Input
+                                        placeholder="@username"
+                                        value={auraSubject}
+                                        onChange={handleSubjectChange}
+                                        className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 px-2"
+                                        aria-label="Their X(Twitter) username"
+                                    />
+                                    <span className="absolute right-4 text-[#B1B6C0] opacity-70 text-xs font-medium">{`(X/Twitter)`}</span>
+                                </div>
+
+                                <div className="relative flex gap-0 w-full bg-[#2E3547] rounded-xl p-3">
+                                    <Textarea
+                                        placeholder="Describe anything you may have in common..."
+                                        value={input}
+                                        onChange={handleInputChange}
+                                        className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 p-0 min-h-20 resize-none"
+                                        aria-label="Describe your situation"
+                                    ></Textarea>
+                                </div>
+
+                            </form>
+                        )}
+
+                    </div>
+                    {isSubmitted && (
+                        <div className='w-full flex flex-col items-center'>
+                            <CardLeftSideHandles className='absolute top-0 -left-[76px] -z-10' />
+                            <CardRightSideHandles className='absolute top-0 -right-[76px] -z-10' />
+                        </div>
+                    )}
                 </div>
 
-                {/* header */}
-                <div className='w-full flex flex-col gap-6 items-center'>
 
-                    <Image
-                        src={Logo}
-                        alt='Aura Logo'
-                        width={200}
-                        height={200}
-                        className='w-20 h-auto'
-                    />
+                {!isSubmitted && (
+                    <button onClick={onSubmit} style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }} className='max-w-[600px] mt-3 w-full h-12 rounded-xl text-white'>
+                        Generate Aura Report ++
+                    </button>
+                )}
 
-                    <div className='flex flex-col gap-1 items-center'>
-                        <h1 className='text-2xl font-light'>Aura Checker</h1>
-                        <p className='opacity-70 font-light'>Compare your Aura with Twitter posts</p>
+                {!isSubmitted && (
+                    <div className='w-full py-10 p-4 flex flex-col gap-3 items-center'>
+                        <p className='opacity-60'>Generating Report...</p>
+                        <div className='relative w-full md:max-w-[600px] mx-auto h-3 rounded-full bg-white/10'>
+                            <div
+                                className='w-[75%] h-full rounded-full' style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }}
+                            />
+                        </div>
+
                     </div>
+                )}
 
-                </div>
+                {isSubmitted && (
+                    <div className='relative pt-14'>
 
-                {/* form */}
-                <form action="" className='flex flex-col gap-2 pt-10'>
-                    <div className="relative flex gap-0 items-center w-full bg-[#2E3547] rounded-xl px-3 h-12">
-                        <span className="shrink-0">Your:</span>
-                        <Input
-                            placeholder="@username"
-                            value={auraUser}
-                            onChange={handleUserChange}
-                            className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 px-2"
-                            aria-label="Your X(Twitter) username"
-                        />
-                        <span className="absolute right-4 text-[#B1B6C0] opacity-70 text-xs font-medium">{`(X/Twitter)`}</span>
+                        {/* result header */}
+                        <div className='flex flex-col gap-4 items-center'>
+                            <h2 className='text-2xl md:text-3xl font-medium md:font-light'>Aura Compatibility Report</h2>
+                            <div className='flex items-center gap-4'>
+                                <div className='h-8 rounded-full border border-white/15 px-4 inline-flex items-center gap-2 text-sm text-white/70'>
+                                    @kartik_builds
+                                </div>
+                                <span className='text-white/50'>x</span>
+                                <div className='h-8 rounded-full border border-white/15 px-4 inline-flex items-center gap-2 text-sm text-white/70'>
+                                    @elonmusk
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* result body */}
+                        <div className='mt-10 max-w-[900px] text-white/70 tracking-wider font-light leading-5 p-2'>
+                            <p>
+                                First, I'll look at @kartik_builds. From the posts provided, it seems like Kartik is a Design Engineer focused on AI and building products like Supermemoryai. He shares a lot about his projects, progress, and even some personal updates like joining as a co-founder. His posts often include emojis and hashtags, which gives a sense of enthusiasm and engagement. He also interacts with others, like giving shoutouts and collaborating, which shows he's connected and supportive. There are some posts where he expresses frustration, like being tired of remote work, but overall, his feed is positive and focused on growth and building things.
+                            </p>
+                        </div>
+
                     </div>
-
-                    <div className="relative flex gap-0 items-center w-full bg-[#2E3547] rounded-xl px-3 h-12">
-                        <span className="shrink-0">Their:</span>
-                        <Input
-                            placeholder="@username"
-                            value={auraSubject}
-                            onChange={handleSubjectChange}
-                            className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 px-2"
-                            aria-label="Their X(Twitter) username"
-                        />
-                        <span className="absolute right-4 text-[#B1B6C0] opacity-70 text-xs font-medium">{`(X/Twitter)`}</span>
-                    </div>
-
-                    <div className="relative flex gap-0 w-full bg-[#2E3547] rounded-xl p-3">
-                        <Textarea
-                            placeholder="Describe anything you may have in common..."
-                            value={input}
-                            onChange={handleInputChange}
-                            className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 p-0 min-h-20"
-                            aria-label="Describe your situation"
-                        ></Textarea>
-                    </div>
-
-                </form>
+                )}
             </div>
-            <button style={{background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)'}} className='max-w-[600px] mt-3 w-full h-12 rounded-xl text-white'>
-                Generate Aura Report ++
-            </button>
+
         </div>
     )
 }

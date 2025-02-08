@@ -4,6 +4,9 @@ import { Analytics } from "@vercel/analytics/react"
 import { Toaster } from "react-hot-toast"
 import GradientBackground from '@/components/GradientBackground'
 import type { Viewport } from 'next'
+import { Inter } from 'next/font/google'
+
+const inter = Inter({ subsets: ['latin'], weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'] })
 
 
 export const metadata = {
@@ -22,7 +25,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${GeistSans.className} min-h-screen w-screen overflow-x-hidden bg-black`}>
+      <body className={`${inter.className} min-h-screen w-screen overflow-x-hidden bg-black`}>
         <Toaster position="top-center" />
         <GradientBackground>
           {children}
