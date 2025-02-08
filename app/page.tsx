@@ -15,6 +15,11 @@ import { Badge } from "@/components/ui/badge"
 import Image from 'next/image'
 import { Skeleton } from "@/components/ui/skeleton"
 import toast from 'react-hot-toast'
+import Logo from '@/assets/Logo.png'
+import { CardTopLeftCover, CardTopRightCover } from '@/assets/CardTopCover'
+import { CardLeftSideCover, CardRightSideCover } from '@/assets/CardSideCover'
+import { CardLeftSideHandles, CardRightSideHandles } from '@/assets/CardSideHandles'
+import ShareButton from '@/components/ShareButton'
 
 interface Models {
   name: string
@@ -114,6 +119,8 @@ export default function Home() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [selectedModel, setSelectedModel] = useState(models[0].modelId)
 
+  // const [isLoading, setIsLoading] = useState(false)
+
   const { messages, input, handleInputChange, handleSubmit, setMessages, stop, isLoading } = useChat({
     api: '/api/check-aura',
     body: { auraUser, auraSubject, model: selectedModel }
@@ -147,12 +154,16 @@ export default function Home() {
     setAuraSubject(cleanUsername);
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     if (!validateUsernames(auraUser, auraSubject)) return;
 
+    // setIsLoading(true)
+
+    // await new Promise(resolve => setTimeout(resolve, 3000))
+    // setIsLoading(false)
     setIsSubmitted(true);
     handleSubmit(e);
   };
@@ -189,313 +200,235 @@ export default function Home() {
   }, [messages, result])
 
   return (
-    <div className="min-h-screen bg-zinc-900 flex flex-col items-center px-4 sm:px-6">
-      <section id="app" className="w-full max-w-3xl py-12 sm:py-20">
-        <div className="flex flex-col gap-6">
-          <div className="flex justify-center">
-            <Badge className="inline-block bg-zinc-800 text-zinc-200 text-xs px-3 py-1 rounded-full">
-              Powered by <a href="https://exa.ai" target="_blank" rel="noopener noreferrer" className="hover:no-underline text-zinc-200">Exa.AI</a>, <a href="https://deepseek.com" target="_blank" rel="noopener noreferrer" className="hover:no-underline text-zinc-200">DeepSeek LLMs</a> and <a href="https://sdk.vercel.ai" target="_blank" rel="noopener noreferrer" className="hover:no-underline text-zinc-200">Vercel AI SDK</a>
-            </Badge>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight !text-zinc-100 text-center">
-            Aura Checker
-          </h1>
-          <p className="text-zinc-400 text-lg text-center">
-            Compare your <strong className="!text-zinc-100">Aura</strong> with X(Twitter) posts.
-          </p>
+    <div className="min-h-screen flex flex-col items-center px-4 sm:px-6 py-20 text-sm md:text-[15px]">
 
-          <div className="w-full">
-            <AnimatePresence mode="wait">
-              {!isSubmitted ? (
+      <div className='fixed top-4 right-4'>
+        <ShareButton />
+      </div>
+
+      <div className='w-full flex flex-col items-center relative z-10'>
+        <div className='relative w-full md:max-w-[800px]'>
+          <div className="bg-[#1F2433] backdrop-blur-sm border-[5px] border-[#293040] p-3 pt-2 rounded-[32px] relative overflow-hidden">
+
+
+            <motion.div
+              animate={{ height: isLoading ? '260px' : '162px' }}
+              className='absolute top-0 left-0 w-full flex overflow-visible justify-between'
+            >
+              <CardTopLeftCover
+                preserveAspectRatio='none'
+                className={`relative scale-[65%] h-full md:scale-100 origin-top-left shrink-0 ${!isSubmitted ? 'left-0' : '-left-[300px]'} duration-500`}
+              />
+              <CardTopRightCover
+                preserveAspectRatio='none'
+                className={`relative h-full scale-[65%] md:scale-100 origin-top-right ${!isSubmitted ? 'right-0' : '-right-[300px]'} duration-500`}
+              />
+            </motion.div>
+
+            {!isLoading && isSubmitted && (
+              <div className='absolute top-0 left-0 w-full flex justify-between h-full overflow-visible'>
                 <motion.div
-                  key="input-form"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
+                  initial={{ x: "-200px" }}
+                  animate={{ x: "-40px" }}
+                  transition={{ duration: 0.5, ease: "easeInOut", delay: 0.2 }}
                 >
-                  <div className="bg-zinc-800/50 backdrop-blur-sm border-zinc-700/60 p-4 sm:p-6 pt-2 space-y-4 sm:space-y-6 rounded-lg">
-                    <form
-                      onSubmit={onSubmit}
-                      className="space-y-4 sm:space-y-5"
-                    >
-                      <div className="flex justify-end w-fit">
-                        <Select
-                          value={selectedModel}
-                          onValueChange={setSelectedModel}
-                        >
-                          <SelectTrigger className="whitespace-nowrap border-none shadow-none focus:ring-0 px-0 py-0 h-6 text-xs text-zinc-400">
-                            <SelectValue placeholder="Select model" />
-                          </SelectTrigger>
-                          <SelectContent className="min-w-[200px] bg-zinc-800 border-zinc-700">
-                            {models.map((model) => (
-                              <SelectItem
-                                key={model.modelId}
-                                value={model.modelId}
-                                className="text-zinc-300 hover:bg-zinc-700"
-                              >
-                                <div className="flex items-center space-x-2">
-                                  <Image
-                                    src={model.icon}
-                                    alt={model.name}
-                                    width={14}
-                                    height={14}
-                                    className="rounded-full"
-                                  />
-                                  <span className="text-xs">{model.name}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="relative">
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">@</div>
-                        <Input
-                          placeholder="Your X(Twitter) username"
-                          value={auraUser}
-                          onChange={handleUserChange}
-                          className="bg-zinc-800/50 border-zinc-700/60 text-zinc-200 h-12 sm:h-11 text-base sm:text-sm pl-8"
-                          aria-label="Your X(Twitter) username"
-                        />
-                      </div>
-                      <div className="relative">
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">@</div>
-                        <Input
-                          placeholder="Their X(Twitter) username"
-                          value={auraSubject}
-                          onChange={handleSubjectChange}
-                          className="bg-zinc-800/50 border-zinc-700/60 text-zinc-200 h-12 sm:h-11 text-base sm:text-sm pl-8"
-                          aria-label="Their X(Twitter) username"
-                        />
-                      </div>
-
-
-                      <Textarea
-                        placeholder="Describe anything you may have in common..."
-                        value={input}
-                        onChange={handleInputChange}
-                        className="bg-zinc-800/50 border-zinc-700/60 text-zinc-200 min-h-[120px] resize-none text-base sm:text-sm"
-                        aria-label="Describe your situation"
-                      />
-
-                      <Button
-                        type="submit"
-                        disabled={!auraUser || !auraSubject || !input.trim()}
-                        className="w-full bg-zinc-200 text-zinc-900 hover:bg-zinc-300 h-12 sm:h-11 text-base sm:text-sm"
-                      >
-                        {isLoading ? 'Processing...' : 'Generate Aura Report'}
-                      </Button>
-                    </form>
-                  </div>
+                  <CardLeftSideCover className="h-full w-[62px] md:w-auto relative rotate-180" />
                 </motion.div>
-              ) : (
                 <motion.div
-                  key="result-view"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="space-y-4"
+                  initial={{ x: "200px" }}
+                  animate={{ x: "40px" }}
+                  transition={{ duration: 0.5, ease: "easeInOut", delay: 0.2 }}
                 >
-                  <div className="bg-zinc-800/40 backdrop-blur-md border-zinc-700/20 p-3 sm:p-6 rounded-lg">
-                    {!result ? (
-                      <>
-                        <div className="border-b border-zinc-700/20 pb-4 mb-4 flex items-center">
-                          <Skeleton className="h-8 w-[140px] mr-4" />
-                          <p className="text-zinc-400 text-sm animate-pulse">
-                            {loadingMessages[loadingIdx]}
-                          </p>
-                        </div>
-                        <div className="space-y-6">
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-[90%]" />
-                          <Skeleton className="h-4 w-[95%]" />
-                          <Skeleton className="h-20 w-full rounded-lg" />
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-[92%]" />
-                          <Skeleton className="h-4 w-[88%]" />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="border-b border-zinc-700/20 px-2 sm:px-6 pb-4 flex flex-col mx-auto justify-center items-center">
-                          <h2 className="text-xl font-medium !text-zinc-100 text-center">
-                            Aura Compatibility Report
-                          </h2>
-                          <div className="flex items-center gap-2 text-sm text-zinc-400 mt-2 flex-wrap justify-center">
-                            <span className="px-3 py-1.5 bg-zinc-900/50 rounded-full border border-zinc-700/60">
-                              @{auraUser}
-                            </span>
-                            <span className="text-zinc-500">×</span>
-                            <span className="px-3 py-1.5 bg-zinc-900/50 rounded-full border border-zinc-700/60">
-                              @{auraSubject}
-                            </span>
-                          </div>
-                        </div>
-                        <ScrollArea className="h-auto">
-                          <div className="p-2 sm:p-6">
-                            <div className="space-y-6">
-                              {reasoning && (
-                                <Accordion
-                                  collapsible
-                                  type="single"
-                                  defaultValue="reasoning"
-                                  className="mb-8 max-w-full sm:max-w-2xl"
-                                >
-                                  <AccordionItem
-                                    value="reasoning"
-                                    className="border-none rounded-lg bg-zinc-800/40 backdrop-blur-sm"
-                                  >
-                                    <AccordionTrigger className="w-full flex items-center justify-between p-4 text-sm font-medium !text-zinc-100 hover:bg-zinc-800/40 rounded-lg transition-all hover:no-underline">
-                                      AI Reasoning Process
-                                    </AccordionTrigger>
-                                    <AccordionContent className="px-4 pb-4 pt-1 max-w-full sm:max-w-2xl">
-                                      <div className="prose prose-sm sm:prose prose-invert prose-zinc w-full break-words">
-                                        <Marked value={reasoning} renderer={renderer} />
-                                      </div>
-                                    </AccordionContent>
-                                  </AccordionItem>
-                                </Accordion>
-                              )}
-
-                              {result && (
-                                <div className="prose prose-sm sm:prose prose-invert prose-zinc max-w-full sm:max-w-2xl px-2 break-words">
-                                  <Marked value={result} renderer={renderer} />
-                                </div>
-                              )}
-                            </div>
-                            <div ref={scrollRef} />
-                          </div>
-                        </ScrollArea>
-                        <div className="mt-8 pt-6 border-t border-zinc-700/20 flex justify-center">
-                          <Button
-                            onClick={resetForm}
-                            variant="ghost"
-                            className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
-                          >
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                            Start Over
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  <CardRightSideCover className="h-full w-[62px] md:w-auto relative rotate-180" />
                 </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {!isSubmitted && (
-            <div className="w-full max-w-3xl space-y-8 mt-12">
-              <p className="text-zinc-400 text-lg text-center">
-                Powered by Exa for post analysis, DeepSeek for vibe matching, and Vercel AI SDK for real-time <strong className="!text-zinc-100">Aura Points</strong>.
-              </p>
-
-              <Accordion type="single" collapsible className="w-full space-y-2 sm:space-y-3">
-                <AccordionItem
-                  value="what"
-                  className="border-none rounded-lg bg-zinc-800/40 backdrop-blur-sm data-[state=open]:bg-zinc-800/60 transition-colors"
-                >
-                  <AccordionTrigger className="w-full flex items-center justify-between p-4 text-sm font-medium !text-zinc-100 hover:bg-zinc-700/40 rounded-lg transition-all hover:no-underline">
-                    What We Do
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 pt-1 text-sm text-zinc-400">
-                    <div className="space-y-2">
-                      We use Exa to analyze X posts, DeepSeek for vibe matching, and Vercel AI SDK for streaming real-time <strong className="!text-zinc-100">Aura Points</strong>. Get instant insights into your digital energy alignment.
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem
-                  value="how"
-                  className="border-none rounded-lg bg-zinc-800/40 backdrop-blur-sm data-[state=open]:bg-zinc-800/60 transition-colors"
-                >
-                  <AccordionTrigger className="w-full flex items-center justify-between p-4 text-sm font-medium !text-zinc-100 hover:bg-zinc-700/40 rounded-lg transition-all hover:no-underline">
-                    How It Works
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 pt-1 text-sm text-zinc-400">
-                    <div className="space-y-2.5">
-                      <div className="flex items-center gap-3">
-                        <span className="text-zinc-600">1.</span>
-                        <span>Exa fetches and analyzes your recent X posts and interactions</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-zinc-600">2.</span>
-                        <span>DeepSeek processes the vibe match and calculates compatibility</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-zinc-600">3.</span>
-                        <span>Vercel AI SDK streams your real-time <strong className="!text-zinc-100">Aura Points</strong> analysis</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-zinc-600">4.</span>
-                        <span>Get detailed insights about your digital energy alignment</span>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem
-                  value="features"
-                  className="border-none rounded-lg bg-zinc-800/40 backdrop-blur-sm data-[state=open]:bg-zinc-800/60 transition-colors"
-                >
-                  <AccordionTrigger className="w-full flex items-center justify-between p-4 text-sm font-medium !text-zinc-100 hover:bg-zinc-700/40 rounded-lg transition-all hover:no-underline">
-                    Features
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 pt-1 text-sm text-zinc-400">
-                    <div className="space-y-2.5">
-                      <div className="flex items-center gap-3">
-                        <span className="h-1 w-1 rounded-full bg-zinc-600" />
-                        <span>Smart X post analysis powered by Exa&apos;s search technology</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="h-1 w-1 rounded-full bg-zinc-600" />
-                        <span>Advanced vibe matching with DeepSeek&apos;s language models</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="h-1 w-1 rounded-full bg-zinc-600" />
-                        <span>Real-time streaming responses with Vercel AI SDK</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="h-1 w-1 rounded-full bg-zinc-600" />
-                        <span>Comprehensive digital aura analysis and compatibility scoring</span>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-
-              <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
-                <div className="bg-zinc-800/50 backdrop-blur-sm border-zinc-700/60 p-6 rounded-lg hover:bg-zinc-800/80 transition-colors cursor-pointer">
-                  <h3 className="!text-zinc-100 font-medium mb-2">Post Analysis</h3>
-                  <p className="text-zinc-400 text-sm">
-                    Exa&apos;s technology analyzes X posts to understand your digital presence and energy.
-                  </p>
-                </div>
-                <div className="bg-zinc-800/50 backdrop-blur-sm border-zinc-700/60 p-6 rounded-lg hover:bg-zinc-800/80 transition-colors cursor-pointer">
-                  <h3 className="!text-zinc-100 font-medium mb-2">Real-time Results</h3>
-                  <p className="text-zinc-400 text-sm">
-                    Instant vibe matching and compatibility scoring with DeepSeek and Vercel AI SDK.
-                  </p>
-                </div>
               </div>
+            )}
+
+            {/* header */}
+            <div className='w-full flex flex-col gap-6 items-center my-6'>
+              <Image
+                src={Logo}
+                alt='Aura Logo'
+                width={200}
+                height={200}
+                className='w-20 h-auto'
+              />
+
+              <div className='flex flex-col gap-1 items-center'>
+                <h1 className='text-2xl font-light'>Aura Checker</h1>
+                <p className='opacity-70 font-light'>Compare your Aura with Twitter posts</p>
+              </div>
+
+              {/*  */}
+              {isSubmitted && (
+                <div className='flex flex-col md:flex-row p-4 w-full gap-8 mt-4 max-w-[600px]'>
+                  <div className='flex flex-col items-center p-4 bg-[#2E3547] rounded-2xl w-full gap-3'>
+                    <p className='text-4xl font-medium'>75</p>
+                    <div className='flex flex-col items-center gap-1'>
+                      <p className='text-sm text-[#B1B6C0] opacity-60'>Aura points</p>
+                      <p className='opacity-60'>@{auraUser}</p>
+                    </div>
+                  </div>
+
+                  <div className='flex flex-col items-center p-4 bg-[#2E3547] rounded-2xl w-full gap-3' style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }}>
+                    <p className='text-4xl font-medium'>90</p>
+                    <div className='flex flex-col items-center gap-1'>
+                      <p className='text-sm opacity-70'>Aura points</p>
+                      <p>@{auraSubject}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
+            </div>
+
+            {/* form */}
+            {!isLoading && !isSubmitted && (
+              <form
+                className='flex flex-col gap-2 pt-5'
+              >
+                <div className="relative flex gap-0 items-center w-full bg-[#2E3547] rounded-xl px-3 h-12">
+                  <span className="shrink-0">Your:</span>
+                  <Input
+                    placeholder="@username"
+                    value={auraUser}
+                    onChange={handleUserChange}
+                    className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 px-2"
+                    aria-label="Your X(Twitter) username"
+                  />
+                  <span className="absolute right-4 text-[#B1B6C0] opacity-70 text-xs font-medium">{`(X/Twitter)`}</span>
+                </div>
+
+                <div className="relative flex gap-0 items-center w-full bg-[#2E3547] rounded-xl px-3 h-12">
+                  <span className="shrink-0">Their:</span>
+                  <Input
+                    placeholder="@username"
+                    value={auraSubject}
+                    onChange={handleSubjectChange}
+                    className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 px-2"
+                    aria-label="Their X(Twitter) username"
+                  />
+                  <span className="absolute right-4 text-[#B1B6C0] opacity-70 text-xs font-medium">{`(X/Twitter)`}</span>
+                </div>
+
+                <div className="relative flex gap-0 w-full bg-[#2E3547] rounded-xl p-3">
+                  <Textarea
+                    placeholder="Describe anything you may have in common..."
+                    value={input}
+                    onChange={handleInputChange}
+                    className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 p-0 min-h-20 resize-none"
+                    aria-label="Describe your situation"
+                  ></Textarea>
+                </div>
+
+              </form>
+            )}
+
+          </div>
+
+          {!isLoading && isSubmitted && (
+            <div className='w-full flex items-center justify-between absolute top-0 left-0 -z-10'>
+              <motion.div
+                initial={{ x: "-20px", opacity: 0 }}
+                animate={{ x: "-76px", opacity: 1 }}
+                transition={{ duration: 0.5, ease: "easeInOut", delay: 0.5 }}
+              >
+                <CardLeftSideHandles />
+              </motion.div>
+              <motion.div
+                initial={{ x: "20px", opacity: 0 }}
+                animate={{ x: "76px", opacity: 1 }}
+                transition={{ duration: 0.5, ease: "easeInOut", delay: 0.5 }}
+              >
+                <CardRightSideHandles />
+              </motion.div>
             </div>
           )}
         </div>
-      </section>
 
-      <footer className="w-full max-w-3xl py-12">
-        <div className="flex justify-between items-center px-4">
-          <p className="text-zinc-400">© {new Date().getFullYear()} Zaid Mukaddam</p>
-          <a
-            href="https://git.new/aura"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-zinc-400 hover:text-zinc-200 transition-colors"
+
+        {!isLoading && !isSubmitted && (
+          <button
+            onClick={onSubmit}
+            style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }} className='max-w-[800px] mt-3 w-full h-12 rounded-xl text-white'
           >
-            <Github className="w-4 h-4" />
-          </a>
-        </div>
-      </footer>
+            Generate Aura Report ++
+          </button>
+        )}
+
+        {(isSubmitted && !result) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className='w-full py-10 p-4 flex flex-col gap-3 items-center'
+          >
+            <p className='opacity-60'>Generating Report...</p>
+            <div className='relative w-full md:max-w-[600px] mx-auto h-3 rounded-full bg-white/10'>
+              <motion.div
+                className='h-full rounded-full' style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }}
+                initial={{ width: '0%' }}
+                animate={{ width: '90%' }}
+                exit={{ width: '100%' }}
+                transition={{ duration: isLoading ? 3 : 0.3 }}
+              />
+            </div>
+
+          </motion.div>
+        )}
+
+        {result && (
+          <div className='relative pt-14'>
+
+            {/* result header */}
+            <div className='flex flex-col gap-4 items-center'>
+              <h2 className='text-2xl md:text-3xl font-medium md:font-light'>Aura Compatibility Report</h2>
+              <div className='flex items-center gap-4'>
+                <div className='h-8 rounded-full border border-white/15 px-4 inline-flex items-center gap-2 text-sm text-white/70'>
+                  @{auraUser}
+                </div>
+                <span className='text-white/50'>x</span>
+                <div className='h-8 rounded-full border border-white/15 px-4 inline-flex items-center gap-2 text-sm text-white/70'>
+                  @{auraSubject}
+                </div>
+              </div>
+            </div>
+
+            {/* result body */}
+            <div className='mt-10 max-w-[900px] text-white/70 tracking-wider font-light leading-5 p-2'>
+              {reasoning && (
+                <Accordion
+                  collapsible
+                  type="single"
+                  defaultValue="reasoning"
+                  className="mb-8 max-w-full sm:max-w-2xl"
+                >
+                  <AccordionItem
+                    value="reasoning"
+                    className="border-none rounded-lg bg-zinc-800/40 backdrop-blur-sm"
+                  >
+                    <AccordionTrigger className="w-full flex items-center justify-between p-4 text-sm font-medium !text-zinc-100 hover:bg-zinc-800/40 rounded-lg transition-all hover:no-underline">
+                      AI Reasoning Process
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4 pt-1 max-w-full sm:max-w-2xl">
+                      <div className="prose prose-sm sm:prose prose-invert prose-zinc w-full break-words">
+                        <Marked value={reasoning} renderer={renderer} />
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              )}
+              {result && (
+                <div className="prose prose-sm sm:prose prose-invert prose-zinc max-w-full sm:max-w-2xl px-2 break-words">
+                  <Marked value={result} renderer={renderer} />
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+      </div>
+
     </div>
   )
 }
