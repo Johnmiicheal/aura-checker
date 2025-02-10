@@ -10,31 +10,26 @@ interface ShareButtonProps {
 }
 
 export default function ShareButton({ getImage, getShareUrl }: ShareButtonProps) {
-
     const handleShare = async () => {
         if (getImage) {
             const imageUrl = await getImage();
             if (imageUrl) {
-                try {
-                    const shareUrl = getShareUrl ? getShareUrl() : window.location.href;
+                const shareUrl = getShareUrl ? getShareUrl() : window.location.href;
 
-                    // Try native share API first
-                    if (navigator.share) {
-                        const blob = await (await fetch(imageUrl)).blob();
-                        const file = new File([blob], 'aura-comparison.png', { type: 'image/png' });
-                        await navigator.share({
-                            files: [file],
-                            title: 'Aura Comparison',
-                            text: 'Check out this Aura Comparison!',
-                            url: shareUrl
-                        });
-                    } else {
-                        // Fallback to clipboard
-                        await navigator.clipboard.writeText(shareUrl);
-                        toast.success('Link copied to clipboard!');
-                    }
-                } catch (err) {
-                    toast.error('Download cancelled');
+                // Try native share API first
+                if (navigator.share) {
+                    const blob = await (await fetch(imageUrl)).blob();
+                    const file = new File([blob], 'aura-comparison.png', { type: 'image/png' });
+                    await navigator.share({
+                        files: [file],
+                        title: 'Aura Comparison',
+                        text: 'Check out this Aura Comparison!',
+                        url: shareUrl
+                    });
+                } else {
+                    // Fallback to clipboard
+                    await navigator.clipboard.writeText(shareUrl);
+                    toast.success('Link copied to clipboard!');
                 }
             }
         } else {
