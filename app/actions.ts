@@ -48,6 +48,10 @@ export async function getAuraScores(message: string) {
 export async function createShareableLink(data: z.infer<typeof shareSchema>) {
   // Validate the data before proceeding
   const validatedData = shareSchema.parse(data)
+
+  if (!validatedData) {
+    throw new Error('Invalid data')
+  }
   
   try {
     const sql = neon(process.env.DATABASE_URL!)

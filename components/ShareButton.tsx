@@ -9,7 +9,7 @@ interface ShareButtonProps {
     getShareUrl?: () => string;
 }
 
-export default function ShareButton({ getImage, shareId, getShareUrl }: ShareButtonProps) {
+export default function ShareButton({ getImage, getShareUrl }: ShareButtonProps) {
 
     const handleShare = async () => {
         if (getImage) {

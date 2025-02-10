@@ -137,7 +137,7 @@ export default function Home({ searchParams }: HomeProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
 
-  const { messages, input, handleInputChange, handleSubmit, setMessages, stop, isLoading } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: '/api/check-aura',
     body: { auraUser, auraSubject, model: selectedModel },
     initialMessages: params ? [{
