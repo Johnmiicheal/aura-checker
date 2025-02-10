@@ -3,12 +3,13 @@ import { Inter } from 'next/font/google'
 import { Analytics } from "@vercel/analytics/react"
 import { Toaster } from "react-hot-toast"
 import GradientBackground from '@/components/GradientBackground'
-import type { Viewport } from 'next'
+import type { Metadata, Viewport } from 'next'
 
 const inter = Inter({ subsets: ['latin'], weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'] })
 
 
-export const metadata = {
+export const metadata: Metadata = {
+  metadataBase: new URL('https://check-aura.vercel.app'),
   title: 'Aura Checker',
   description: 'Get a vibe check on two Twitter users',
 }
