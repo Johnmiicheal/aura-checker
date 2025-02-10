@@ -131,7 +131,7 @@ export default function Home({ searchParams }: HomeProps) {
     } : null
   )
   const [shareId, setShareId] = useState<string | null>(null)
-  const [selectedModel, setSelectedModel] = useState(models[0].modelId)
+  const [selectedModel] = useState(models[0].modelId)
   
   // Refs
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -236,29 +236,6 @@ export default function Home({ searchParams }: HomeProps) {
       .replace('{subject}', auraSubject);
   }
 
-  const downloadImage = async () => {
-    if (!cardRef.current) return
-    
-    try {
-      const dataUrl = await toPng(cardRef.current, {
-        quality: 1.0,
-        backgroundColor: '#111827',
-        pixelRatio: 2,
-        style: {
-          transform: 'scale(1)',
-          borderRadius: '32px'
-        }
-      })
-      
-      const link = document.createElement('a')
-      link.download = `aura-comparison-${auraUser}-${auraSubject}.png`
-      link.href = dataUrl
-      link.click()
-    } catch (err) {
-      toast.error('Failed to download image')
-    }
-  }
-
   const getCardImage = async () => {
     if (!cardRef.current) return null
     
@@ -272,8 +249,9 @@ export default function Home({ searchParams }: HomeProps) {
           borderRadius: '32px'
         }
       })
-    } catch (err) {
+    } catch (error) {
       toast.error('Failed to generate image')
+      console.error('Image generation error:', error)
       return null
     }
   }

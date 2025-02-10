@@ -1,10 +1,9 @@
 import './globals.css'
-import { GeistSans } from 'geist/font/sans'
+import { Inter } from 'next/font/google'
 import { Analytics } from "@vercel/analytics/react"
 import { Toaster } from "react-hot-toast"
 import GradientBackground from '@/components/GradientBackground'
 import type { Viewport } from 'next'
-import { Inter } from 'next/font/google'
 
 const inter = Inter({ subsets: ['latin'], weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'] })
 
