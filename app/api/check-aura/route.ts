@@ -46,7 +46,7 @@ export async function POST(req: Request) {
 
     Create a detailed comparison table. For each attribute, provide a short label followed by " - " and then a brief explanation.
 
-    Do not give any other information other than the table.
+    Do not give any other information other than the table as the table is the only output required!! remember this.
 
     Format as a markdown table with these exact attributes:
     | ATTRIBUTES | @${auraUser} | @${auraSubject} |
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
         model: selectedModel,
         system,
         messages: convertToCoreMessages(messages),
-        temperature: 0.6,
+        temperature: 0,
         onChunk(event) {
             if (event.chunk.type === "reasoning") {
                 console.log(event.chunk.textDelta);
