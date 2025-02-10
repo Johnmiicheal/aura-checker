@@ -3,19 +3,54 @@ import Link from 'next/link'
 import React from 'react'
 import toast from 'react-hot-toast'
 
-function ShareButton() {
+interface ShareButtonProps {
+    getImage?: () => Promise<string | null>;
+    shareId?: string | null;
+    getShareUrl?: () => string;
+}
 
-    const handleShare = () => {
-        if (typeof navigator !== 'undefined') {
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Check your Aura now',
-                    text: 'Check your Aura now',
-                    url: 'https://aura-checker.vercel.app/'
-                })
-            } else {
-                navigator.clipboard.writeText('Check your Aura now: https://aura-checker.vercel.app/')
-                toast('Copied to clipboard')
+export default function ShareButton({ getImage, shareId, getShareUrl }: ShareButtonProps) {
+
+    const handleShare = async () => {
+        if (getImage) {
+            const imageUrl = await getImage();
+            if (imageUrl) {
+                try {
+                    const shareUrl = getShareUrl ? getShareUrl() : window.location.href;
+
+                    // Try native share API first
+                    if (navigator.share) {
+                        const blob = await (await fetch(imageUrl)).blob();
+                        const file = new File([blob], 'aura-comparison.png', { type: 'image/png' });
+                        await navigator.share({
+                            files: [file],
+                            title: 'Aura Comparison',
+                            text: 'Check out this Aura Comparison!',
+                            url: shareUrl
+                        });
+                    } else {
+                        // Fallback to clipboard
+                        await navigator.clipboard.writeText(shareUrl);
+                        toast.success('Link copied to clipboard!');
+                    }
+                } catch (err) {
+                    toast.error('Download cancelled');
+                }
+            }
+        } else {
+            if (typeof navigator !== 'undefined') {
+                const shareUrl = getShareUrl ? getShareUrl() : 'https://aura-checker.vercel.app/';
+
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'Check your Aura now',
+                        text: 'Check your Aura now',
+                        url: shareUrl
+                    })
+                } else {
+                    navigator.clipboard.writeText(`Check your Aura now: ${shareUrl}`)
+                    toast('Copied to clipboard')
+                }
             }
         }
     }
@@ -38,5 +73,3 @@ function ShareButton() {
         </div>
     )
 }
-
-export default ShareButton

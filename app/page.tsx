@@ -2,24 +2,22 @@
 
 import { useEffect, useState, ReactNode, useRef } from 'react'
 import { useChat } from 'ai/react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Button } from "@/components/ui/button"
+import { motion } from 'framer-motion'
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Github } from 'lucide-react'
 import Marked, { ReactRenderer } from 'marked-react'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
 import Image from 'next/image'
-import { Skeleton } from "@/components/ui/skeleton"
 import toast from 'react-hot-toast'
 import Logo from '@/assets/Logo.png'
 import { CardTopLeftCover, CardTopRightCover } from '@/assets/CardTopCover'
 import { CardLeftSideCover, CardRightSideCover } from '@/assets/CardSideCover'
 import { CardLeftSideHandles, CardRightSideHandles } from '@/assets/CardSideHandles'
 import ShareButton from '@/components/ShareButton'
+import { getAuraScores, createShareableLink } from './actions'
+import { toPng } from 'html-to-image'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface Models {
   name: string
@@ -44,12 +42,12 @@ const models: Models[] = [
 ]
 
 const loadingMessages = [
-  "Analyzing digital footprint...",
-  "Processing social patterns...",
-  "Computing compatibility...",
-  "Mapping social connections...",
-  "Generating insights...",
-  "Finalizing report...",
+  "Fetching @{user} and @{subject}'s recent tweets...",
+  "Analyzing engagement patterns and posting frequency...",
+  "Calculating aura compatibility scores...",
+  "Evaluating communication styles and interests...",
+  "Comparing interaction patterns...",
+  "Generating detailed compatibility report..."
 ]
 
 const renderer: Partial<ReactRenderer> = {
@@ -73,57 +71,104 @@ const renderer: Partial<ReactRenderer> = {
     <li className="text-zinc-300 break-words">{children}</li>
   ),
   table: (children: ReactNode) => (
-    <div className="overflow-x-auto -mx-4 sm:mx-0">
-      <div className="inline-block min-w-full align-middle">
-        <div className="overflow-hidden rounded-lg border border-zinc-700">
-          <table className="min-w-full divide-y divide-zinc-700/50 !m-0">
-            {children}
-          </table>
-        </div>
-      </div>
+    <div className="overflow-x-auto !my-4 rounded-xl border border-[#2E3547]">
+      <table className="w-full border-collapse bg-[#1F2433]/50 backdrop-blur-sm !m-0">
+        {children}
+      </table>
     </div>
   ),
   tableHeader: (children: ReactNode) => (
-    <thead className="bg-zinc-800/90 !text-zinc-200">
+    <thead>
       {children}
     </thead>
   ),
   tableBody: (children: ReactNode) => (
-    <tbody className="divide-y !divide-zinc-700/50">
+    <tbody>
       {children}
     </tbody>
   ),
   tableRow: (children: ReactNode) => (
-    <tr className="transition-colors hover:bg-zinc-700/30">
+    <tr className="!transition-colors hover:!bg-[#2E3547]/30 [&:last-child_td]:border-b-0">
       {children}
     </tr>
   ),
   tableCell: (children: ReactNode[], flags: { header: boolean }) => (
     flags.header ? (
-      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium tracking-wider !text-zinc-200 uppercase">
+      <th className="!px-4 !py-3 !text-left !text-sm !font-semibold !text-white/90 !tracking-wide !bg-[#2E3547] border-b border-[#2E3547]">
         {children}
       </th>
     ) : (
-      <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm !text-zinc-200 whitespace-normal break-words">
+      <td className="!px-4 !py-3 !text-sm !text-white/80 border-b border-[#2E3547]/70">
         {children}
       </td>
     )
   ),
 }
 
-export default function Home() {
-  const [auraUser, setAuraUser] = useState('')
-  const [auraSubject, setAuraSubject] = useState('')
-  const [isSubmitted, setIsSubmitted] = useState(false)
-  const [loadingIdx, setLoadingIdx] = useState(0)
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [selectedModel, setSelectedModel] = useState(models[0].modelId)
+interface HomeProps {
+  searchParams?: string;
+}
 
-  // const [isLoading, setIsLoading] = useState(false)
+export default function Home({ searchParams }: HomeProps) {
+  const router = useRouter()
+
+  // Parse search params once
+  const params = searchParams ? new URLSearchParams(searchParams) : null
+  const isSharedView = !!params && 
+    !!params.get('result') && 
+    !!params.get('auraUser') && 
+    !!params.get('auraSubject')
+
+  // Initialize state with search params if available
+  const [auraUser, setAuraUser] = useState(params?.get('auraUser') || '')
+  const [auraSubject, setAuraSubject] = useState(params?.get('auraSubject') || '')
+  const [isSubmitted, setIsSubmitted] = useState(isSharedView)
+  const [loadingIdx, setLoadingIdx] = useState(0)
+  const [scores, setScores] = useState<{ user: number; subject: number; } | null>(
+    isSharedView ? {
+      user: parseInt(params?.get('userScore') || '0'),
+      subject: parseInt(params?.get('subjectScore') || '0')
+    } : null
+  )
+  const [shareId, setShareId] = useState<string | null>(null)
+  const [selectedModel, setSelectedModel] = useState(models[0].modelId)
+  
+  // Refs
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
 
   const { messages, input, handleInputChange, handleSubmit, setMessages, stop, isLoading } = useChat({
     api: '/api/check-aura',
-    body: { auraUser, auraSubject, model: selectedModel }
+    body: { auraUser, auraSubject, model: selectedModel },
+    initialMessages: params ? [{
+      id: 'shared',
+      role: 'assistant',
+      content: params.get('result') || '',
+      reasoning: params.get('reasoning') || ''
+    }] : [],
+    async onFinish(message) {
+      // Generate aura scores based on AI's analysis
+      const auraScores = await getAuraScores(message.content);
+      setScores(auraScores);
+
+      // Create shareable link
+      try {
+        const { shareId } = await createShareableLink({
+          auraUser,
+          auraSubject,
+          scores: auraScores,
+          result: message.content,
+          reasoning: message.reasoning || ''
+        })
+        setShareId(shareId)
+        
+        // Route to the share URL
+        router.push(`/a/${shareId}`)
+      } catch (error) {
+        console.error('Error creating share link:', error)
+        toast.error('Failed to create shareable link')
+      }
+    },
   })
 
   const validateUsernames = (user: string, subject: string) => {
@@ -156,26 +201,12 @@ export default function Home() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSharedView) return;
     if (!input.trim()) return;
-
     if (!validateUsernames(auraUser, auraSubject)) return;
-
-    // setIsLoading(true)
-
-    // await new Promise(resolve => setTimeout(resolve, 3000))
-    // setIsLoading(false)
     setIsSubmitted(true);
     handleSubmit(e);
   };
-
-  const resetForm = () => {
-    stop()
-    setAuraUser('')
-    setAuraSubject('')
-    setIsSubmitted(false)
-    setMessages([])
-    setLoadingIdx(0)
-  }
 
   useEffect(() => {
     if (isLoading) {
@@ -199,21 +230,75 @@ export default function Home() {
     }
   }, [messages, result])
 
+  const getLoadingMessage = () => {
+    return loadingMessages[loadingIdx]
+      .replace('{user}', auraUser)
+      .replace('{subject}', auraSubject);
+  }
+
+  const downloadImage = async () => {
+    if (!cardRef.current) return
+    
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        quality: 1.0,
+        backgroundColor: '#111827',
+        pixelRatio: 2,
+        style: {
+          transform: 'scale(1)',
+          borderRadius: '32px'
+        }
+      })
+      
+      const link = document.createElement('a')
+      link.download = `aura-comparison-${auraUser}-${auraSubject}.png`
+      link.href = dataUrl
+      link.click()
+    } catch (err) {
+      toast.error('Failed to download image')
+    }
+  }
+
+  const getCardImage = async () => {
+    if (!cardRef.current) return null
+    
+    try {
+      return await toPng(cardRef.current, {
+        quality: 1.0,
+        backgroundColor: '#111827',
+        pixelRatio: 2,
+        style: {
+          transform: 'scale(1)',
+          borderRadius: '32px'
+        }
+      })
+    } catch (err) {
+      toast.error('Failed to generate image')
+      return null
+    }
+  }
+
+  const getShareUrl = () => {
+    return shareId ? `${window.location.origin}/a/${shareId}` : window.location.href
+  }
+
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 sm:px-6 py-20 text-sm md:text-[15px]">
-
-      <div className='fixed top-4 right-4'>
-        <ShareButton />
-      </div>
-
-      <div className='w-full flex flex-col items-center relative z-10'>
-        <div className='relative w-full md:max-w-[800px]'>
-          <div className="bg-[#1F2433] backdrop-blur-sm border-[5px] border-[#293040] p-3 pt-2 rounded-[32px] relative overflow-hidden">
-
+    <div className="min-h-screen flex flex-col items-center px-2 sm:px-6 py-4 sm:py-20 text-sm md:text-[15px]">
+      <div className='w-full flex flex-col items-center relative z-10 max-w-[800px] mx-auto'>
+        <div className='relative w-full'>
+          <div 
+            ref={cardRef}
+            className="bg-[#1F2433] backdrop-blur-sm border-[5px] border-[#293040] p-2 sm:p-3 rounded-[24px] sm:rounded-[32px] relative overflow-hidden w-full"
+          >
+            <div className='w-full flex justify-end pb-2 sm:pb-3 px-2 relative z-30'>
+              {!isLoading && scores && (
+                <ShareButton getImage={getCardImage} shareId={shareId} getShareUrl={getShareUrl} />
+              )}
+            </div>
 
             <motion.div
               animate={{ height: isLoading ? '260px' : '162px' }}
-              className='absolute top-0 left-0 w-full flex overflow-visible justify-between'
+              className='absolute top-0 left-0 w-full flex overflow-visible justify-between z-20'
             >
               <CardTopLeftCover
                 preserveAspectRatio='none'
@@ -226,7 +311,7 @@ export default function Home() {
             </motion.div>
 
             {!isLoading && isSubmitted && (
-              <div className='absolute top-0 left-0 w-full flex justify-between h-full overflow-visible'>
+              <div className='absolute top-0 left-0 w-full flex justify-between h-full overflow-visible z-10'>
                 <motion.div
                   initial={{ x: "-200px" }}
                   animate={{ x: "-40px" }}
@@ -245,13 +330,13 @@ export default function Home() {
             )}
 
             {/* header */}
-            <div className='w-full flex flex-col gap-6 items-center my-6'>
+            <div className='w-full flex flex-col gap-4 sm:gap-6 items-center my-4 sm:my-6'>
               <Image
                 src={Logo}
                 alt='Aura Logo'
                 width={200}
                 height={200}
-                className='w-20 h-auto'
+                className='w-16 sm:w-20 h-auto'
               />
 
               <div className='flex flex-col gap-1 items-center'>
@@ -261,70 +346,111 @@ export default function Home() {
 
               {/*  */}
               {isSubmitted && (
-                <div className='flex flex-col md:flex-row p-4 w-full gap-8 mt-4 max-w-[600px]'>
-                  <div className='flex flex-col items-center p-4 bg-[#2E3547] rounded-2xl w-full gap-3'>
-                    <p className='text-4xl font-medium'>75</p>
-                    <div className='flex flex-col items-center gap-1'>
-                      <p className='text-sm text-[#B1B6C0] opacity-60'>Aura points</p>
-                      <p className='opacity-60'>@{auraUser}</p>
+                <div className='flex flex-col md:flex-row p-2 sm:p-4 w-full gap-4 sm:gap-8 mt-2 sm:mt-4 max-w-[600px]'>
+                  <div className='flex flex-col items-center p-4 rounded-2xl w-full gap-3 relative overflow-hidden'
+                       style={{ 
+                         background: isLoading ? '#2E3547' : 
+                           (scores?.user && scores?.subject && scores.user >= scores.subject) ? 
+                           'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' : 
+                           '#2E3547' 
+                       }}>
+                    {isLoading && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#2E3547] via-[#3a4156] to-[#2E3547] animate-shimmer" />
+                    )}
+                    <p className='text-4xl font-medium relative'>
+                      {scores?.user || '--'}
+                    </p>
+                    <div className='flex flex-col items-center gap-1 relative z-10'>
+                      <p className='text-sm text-white/70'>Aura points</p>
+                      <p className='text-white/80'>@{auraUser}</p>
                     </div>
                   </div>
 
-                  <div className='flex flex-col items-center p-4 bg-[#2E3547] rounded-2xl w-full gap-3' style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }}>
-                    <p className='text-4xl font-medium'>90</p>
-                    <div className='flex flex-col items-center gap-1'>
-                      <p className='text-sm opacity-70'>Aura points</p>
-                      <p>@{auraSubject}</p>
+                  <div className='flex flex-col items-center p-4 rounded-2xl w-full gap-3 relative overflow-hidden'
+                       style={{ 
+                         background: isLoading ? '#2E3547' : 
+                           (scores?.user && scores?.subject && scores.subject > scores.user) ? 
+                           'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' : 
+                           '#2E3547' 
+                       }}>
+                    {isLoading && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#2E3547] via-[#3a4156] to-[#2E3547] animate-shimmer" />
+                    )}
+                    <p className='text-4xl font-medium relative'>
+                      {scores?.subject || '--'}
+                    </p>
+                    <div className='flex flex-col items-center gap-1 relative z-10'>
+                      <p className='text-sm text-white/70'>Aura points</p>
+                      <p className='text-white/80'>@{auraSubject}</p>
                     </div>
                   </div>
                 </div>
               )}
 
-
             </div>
 
             {/* form */}
             {!isLoading && !isSubmitted && (
-              <form
-                className='flex flex-col gap-2 pt-5'
-              >
-                <div className="relative flex gap-0 items-center w-full bg-[#2E3547] rounded-xl px-3 h-12">
-                  <span className="shrink-0">Your:</span>
-                  <Input
-                    placeholder="@username"
-                    value={auraUser}
-                    onChange={handleUserChange}
-                    className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 px-2"
-                    aria-label="Your X(Twitter) username"
-                  />
-                  <span className="absolute right-4 text-[#B1B6C0] opacity-70 text-xs font-medium">{`(X/Twitter)`}</span>
-                </div>
+              <>
+                <form className='flex flex-col gap-2 pt-3 sm:pt-5'>
+                  <div className="relative flex gap-0 items-center w-full bg-[#2E3547] rounded-xl px-3 h-12">
+                    <span className="shrink-0">Your:</span>
+                    <Input
+                      placeholder="@username"
+                      value={auraUser}
+                      onChange={handleUserChange}
+                      className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 px-2"
+                      aria-label="Your X(Twitter) username"
+                    />
+                    <span className="absolute right-4 text-[#B1B6C0] opacity-70 text-xs font-medium">{`(X/Twitter)`}</span>
+                  </div>
 
-                <div className="relative flex gap-0 items-center w-full bg-[#2E3547] rounded-xl px-3 h-12">
-                  <span className="shrink-0">Their:</span>
-                  <Input
-                    placeholder="@username"
-                    value={auraSubject}
-                    onChange={handleSubjectChange}
-                    className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 px-2"
-                    aria-label="Their X(Twitter) username"
-                  />
-                  <span className="absolute right-4 text-[#B1B6C0] opacity-70 text-xs font-medium">{`(X/Twitter)`}</span>
-                </div>
+                  <div className="relative flex gap-0 items-center w-full bg-[#2E3547] rounded-xl px-3 h-12">
+                    <span className="shrink-0">Their:</span>
+                    <Input
+                      placeholder="@username"
+                      value={auraSubject}
+                      onChange={handleSubjectChange}
+                      className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 px-2"
+                      aria-label="Their X(Twitter) username"
+                    />
+                    <span className="absolute right-4 text-[#B1B6C0] opacity-70 text-xs font-medium">{`(X/Twitter)`}</span>
+                  </div>
 
-                <div className="relative flex gap-0 w-full bg-[#2E3547] rounded-xl p-3">
-                  <Textarea
-                    placeholder="Describe anything you may have in common..."
-                    value={input}
-                    onChange={handleInputChange}
-                    className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 p-0 min-h-20 resize-none"
-                    aria-label="Describe your situation"
-                  ></Textarea>
-                </div>
+                  <div className="relative flex gap-0 w-full bg-[#2E3547] rounded-xl p-3">
+                    <Textarea
+                      placeholder="Describe anything you may have in common..."
+                      value={input}
+                      onChange={handleInputChange}
+                      className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 p-0 min-h-20 resize-none"
+                      aria-label="Describe your situation"
+                    ></Textarea>
+                  </div>
 
-              </form>
+                </form>
+
+                <button
+                  onClick={onSubmit}
+                  style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }} 
+                  className='max-w-[800px] mt-3 w-full h-12 rounded-xl text-white'
+                >
+                  Generate Aura Report ++
+                </button>
+              </>
             )}
 
+            {/* Show the Create Your Own button inside the card when in shared view and no result */}
+            {isSharedView && !result && (
+              <div className='w-full flex flex-col gap-2 pt-3 sm:pt-5'>
+                <Link 
+                  href="/"
+                  className='w-full h-12 rounded-xl text-white flex items-center justify-center hover:brightness-110 transition-all'
+                  style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }}
+                >
+                  Generate Aura Report ++
+                </Link>
+              </div>
+            )}
           </div>
 
           {!isLoading && isSubmitted && (
@@ -347,61 +473,49 @@ export default function Home() {
           )}
         </div>
 
-
-        {!isLoading && !isSubmitted && (
-          <button
-            onClick={onSubmit}
-            style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }} className='max-w-[800px] mt-3 w-full h-12 rounded-xl text-white'
-          >
-            Generate Aura Report ++
-          </button>
-        )}
-
         {(isSubmitted && !result) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className='w-full py-10 p-4 flex flex-col gap-3 items-center'
+            className='w-full py-6 sm:py-10 p-3 sm:p-4 flex flex-col gap-3 items-center'
           >
-            <p className='opacity-60'>Generating Report...</p>
+            <p className='opacity-60'>{getLoadingMessage()}</p>
             <div className='relative w-full md:max-w-[600px] mx-auto h-3 rounded-full bg-white/10'>
               <motion.div
-                className='h-full rounded-full' style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }}
+                className='h-full rounded-full'
+                style={{ background: 'linear-gradient(90deg, #939BFF 0%, #5966FE 100%)' }}
                 initial={{ width: '0%' }}
-                animate={{ width: '90%' }}
-                exit={{ width: '100%' }}
-                transition={{ duration: isLoading ? 3 : 0.3 }}
+                animate={{ width: `${((loadingIdx + 1) / loadingMessages.length) * 100}%` }}
+                transition={{ duration: 0.5 }}
               />
             </div>
-
           </motion.div>
         )}
 
         {result && (
-          <div className='relative pt-14'>
-
-            {/* result header */}
-            <div className='flex flex-col gap-4 items-center'>
-              <h2 className='text-2xl md:text-3xl font-medium md:font-light'>Aura Compatibility Report</h2>
-              <div className='flex items-center gap-4'>
-                <div className='h-8 rounded-full border border-white/15 px-4 inline-flex items-center gap-2 text-sm text-white/70'>
+          <div className='relative pt-6 sm:pt-14 w-full flex flex-col items-center'>
+            <div className='flex flex-col gap-3 sm:gap-4 items-center max-w-[900px] w-full'>
+              <h2 className='text-xl sm:text-2xl md:text-3xl font-medium md:font-light text-center px-2'>
+                Aura Compatibility Report
+              </h2>
+              <div className='flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 w-full'>
+                <div className='h-8 rounded-full border border-white/15 px-3 sm:px-4 inline-flex items-center gap-2 text-sm text-white/70 whitespace-nowrap'>
                   @{auraUser}
                 </div>
                 <span className='text-white/50'>x</span>
-                <div className='h-8 rounded-full border border-white/15 px-4 inline-flex items-center gap-2 text-sm text-white/70'>
+                <div className='h-8 rounded-full border border-white/15 px-3 sm:px-4 inline-flex items-center gap-2 text-sm text-white/70 whitespace-nowrap'>
                   @{auraSubject}
                 </div>
               </div>
             </div>
 
-            {/* result body */}
-            <div className='mt-10 max-w-[900px] text-white/70 tracking-wider font-light leading-5 p-2'>
+            <div className='mt-4 sm:mt-10 max-w-[900px] w-full mx-auto text-white/70 tracking-wider font-light leading-5 p-2 sm:p-4'>
               {reasoning && (
                 <Accordion
                   collapsible
                   type="single"
                   defaultValue="reasoning"
-                  className="mb-8 max-w-full sm:max-w-2xl"
+                  className="mb-8 max-w-2xl mx-auto w-full"
                 >
                   <AccordionItem
                     value="reasoning"
@@ -410,7 +524,7 @@ export default function Home() {
                     <AccordionTrigger className="w-full flex items-center justify-between p-4 text-sm font-medium !text-zinc-100 hover:bg-zinc-800/40 rounded-lg transition-all hover:no-underline">
                       AI Reasoning Process
                     </AccordionTrigger>
-                    <AccordionContent className="px-4 pb-4 pt-1 max-w-full sm:max-w-2xl">
+                    <AccordionContent className="px-4 pb-4 pt-1">
                       <div className="prose prose-sm sm:prose prose-invert prose-zinc w-full break-words">
                         <Marked value={reasoning} renderer={renderer} />
                       </div>
@@ -419,16 +533,14 @@ export default function Home() {
                 </Accordion>
               )}
               {result && (
-                <div className="prose prose-sm sm:prose prose-invert prose-zinc max-w-full sm:max-w-2xl px-2 break-words">
+                <div className="prose prose-sm sm:prose prose-invert prose-zinc max-w-2xl mx-auto px-2 break-words">
                   <Marked value={result} renderer={renderer} />
                 </div>
               )}
             </div>
-
           </div>
         )}
       </div>
-
     </div>
   )
 }

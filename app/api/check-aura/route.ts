@@ -40,15 +40,31 @@ export async function POST(req: Request) {
     console.log("User posts before", userPosts)
     console.log("Subject posts before", subjectPosts)
 
-    const system = `You're a Gen-Z aura and aura points analyzer using social media presence of two parties.
+    const system = `You're a Gen-Z aura analyzer using social media presence of two parties.
     
     Analyze the vibes between @${auraUser} and @${auraSubject} based on their information/posts.
-    
-    You will only respond with a tabular analysis of the Aura Points between the two users.
-    Give explaination of the attributes in the table itself: Attributes, @${auraUser}, @${auraSubject}.
-    Like explaination..aura_points.. all in the table itself. No other information should be given outside the table. Not even in the start of the response.
+
+    Create a detailed comparison table. For each attribute, provide a short label followed by " - " and then a brief explanation.
+
     Do not give any other information other than the table.
-    
+
+    Format as a markdown table with these exact attributes:
+    | ATTRIBUTES | @${auraUser} | @${auraSubject} |
+    |------------|--------------|-----------------|
+    | Energy Level | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Engagement Style | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Content Quality | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Interaction Level | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Community Vibes | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Influence Level | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Authenticity | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Consistency | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Adaptability | [Label] - [Explanation] | [Label] - [Explanation] |
+
+    Example format for each cell:
+    "High - Frequently posts and engages with community"
+    "Collaborative - Actively seeks feedback and interaction"
+
     Posts by @${auraUser}:
     ${userPosts.results.map(p => `${p.text}`).join('\n')}
 
@@ -71,6 +87,7 @@ export async function POST(req: Request) {
         model: selectedModel,
         system,
         messages: convertToCoreMessages(messages),
+        temperature: 0.6,
         onChunk(event) {
             if (event.chunk.type === "reasoning") {
                 console.log(event.chunk.textDelta);
