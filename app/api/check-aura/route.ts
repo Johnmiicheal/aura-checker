@@ -5,7 +5,6 @@ import {
     streamText,
     experimental_wrapLanguageModel as wrapLanguageModel,
     extractReasoningMiddleware,
-    LanguageModelV1,
 } from 'ai'
 
 const exa = new Exa(process.env.EXA_API_KEY as string)

@@ -19,12 +19,6 @@ import { toPng } from 'html-to-image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-interface Models {
-  name: string
-  modelId: string
-  description: string
-  icon: string
-}
 
 const loadingMessages = [
   "Fetching @{user} and @{subject}'s recent tweets...",
