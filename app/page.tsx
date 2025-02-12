@@ -26,21 +26,6 @@ interface Models {
   icon: string
 }
 
-const models: Models[] = [
-  {
-    name: "DeepSeek R1 Distill Llama 70b",
-    modelId: 'groq:deepseek-r1-distill-llama-70b',
-    description: 'Meta Llama 3.3 70b Model',
-    icon: '/groq.svg',
-  },
-  {
-    name: 'DeepSeek R1',
-    modelId: 'deepseek:deepseek-reasoner',
-    description: 'DeepSeek Reasoning Model',
-    icon: '/deepseek.svg',
-  },
-]
-
 const loadingMessages = [
   "Fetching @{user} and @{subject}'s recent tweets...",
   "Analyzing engagement patterns and posting frequency...",
@@ -131,7 +116,6 @@ export default function Home({ searchParams }: HomeProps) {
     } : null
   )
   const [shareId, setShareId] = useState<string | null>(null)
-  const [selectedModel] = useState(models[0].modelId)
   
   // Refs
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -139,7 +123,7 @@ export default function Home({ searchParams }: HomeProps) {
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: '/api/check-aura',
-    body: { auraUser, auraSubject, model: selectedModel },
+    body: { auraUser, auraSubject },
     initialMessages: params ? [{
       id: 'shared',
       role: 'assistant',
@@ -374,7 +358,7 @@ export default function Home({ searchParams }: HomeProps) {
                   <div className="relative flex gap-0 items-center w-full bg-[#2E3547] rounded-xl px-3 h-12">
                     <span className="shrink-0">Your:</span>
                     <Input
-                      placeholder="@username"
+                      placeholder="username"
                       value={auraUser}
                       onChange={handleUserChange}
                       className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 px-2"
@@ -386,7 +370,7 @@ export default function Home({ searchParams }: HomeProps) {
                   <div className="relative flex gap-0 items-center w-full bg-[#2E3547] rounded-xl px-3 h-12">
                     <span className="shrink-0">Their:</span>
                     <Input
-                      placeholder="@username"
+                      placeholder="username"
                       value={auraSubject}
                       onChange={handleSubjectChange}
                       className="border-none placeholder:text-[#8B929F] focus-visible:ring-0 px-2"

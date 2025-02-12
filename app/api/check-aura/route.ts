@@ -1,4 +1,3 @@
-import { deepseek } from '@ai-sdk/deepseek'
 import { groq } from '@ai-sdk/groq'
 import Exa from 'exa-js'
 import {
@@ -37,9 +36,6 @@ export async function POST(req: Request) {
         includeDomains: ['twitter.com', 'x.com'],
     })
 
-    console.log("User posts before", userPosts)
-    console.log("Subject posts before", subjectPosts)
-
     const system = `You're a Gen-Z aura analyzer using social media presence of two parties.
     
     Analyze the vibes between @${auraUser} and @${auraSubject} based on their information/posts.
@@ -71,20 +67,8 @@ export async function POST(req: Request) {
     Posts by @${auraSubject}:
     ${subjectPosts.results.map(p => `${p.text}`).join('\n')}`
 
-    console.log("System: ", system)
-
-    let selectedModel: LanguageModelV1;
-
-    const provider = model.split(":")[0]
-
-    if (provider === "deepseek") {
-        selectedModel = deepseek(model.split(":")[1])
-    } else {
-        selectedModel = enhancedModel
-    }
-
     const response = streamText({
-        model: selectedModel,
+        model: enhancedModel,
         system,
         messages: convertToCoreMessages(messages),
         temperature: 0,
