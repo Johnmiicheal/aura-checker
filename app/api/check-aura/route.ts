@@ -15,7 +15,7 @@ const enhancedModel = wrapLanguageModel({
 });
 
 export async function POST(req: Request) {
-    const { messages, auraUser, auraSubject, model } = await req.json()
+    const { messages, auraUser, auraSubject } = await req.json()
 
     const userPosts = await exa.searchAndContents(
         `${auraUser}`, {
