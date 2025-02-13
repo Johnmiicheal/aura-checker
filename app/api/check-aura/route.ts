@@ -1,4 +1,3 @@
-import { deepseek } from '@ai-sdk/deepseek'
 import { groq } from '@ai-sdk/groq'
 import Exa from 'exa-js'
 import {
@@ -6,7 +5,6 @@ import {
     streamText,
     experimental_wrapLanguageModel as wrapLanguageModel,
     extractReasoningMiddleware,
-    LanguageModelV1,
 } from 'ai'
 
 const exa = new Exa(process.env.EXA_API_KEY as string)
@@ -17,7 +15,7 @@ const enhancedModel = wrapLanguageModel({
 });
 
 export async function POST(req: Request) {
-    const { messages, auraUser, auraSubject, model } = await req.json()
+    const { messages, auraUser, auraSubject } = await req.json()
 
     const userPosts = await exa.searchAndContents(
         `${auraUser}`, {
@@ -37,40 +35,42 @@ export async function POST(req: Request) {
         includeDomains: ['twitter.com', 'x.com'],
     })
 
-    console.log("User posts before", userPosts)
-    console.log("Subject posts before", subjectPosts)
-
-    const system = `You're a Gen-Z aura and aura points analyzer using social media presence of two parties.
+    const system = `You're a Gen-Z aura analyzer using social media presence of two parties.
     
     Analyze the vibes between @${auraUser} and @${auraSubject} based on their information/posts.
-    
-    You will only respond with a tabular analysis of the Aura Points between the two users.
-    Give explaination of the attributes in the table itself: Attributes, @${auraUser}, @${auraSubject}.
-    Like explaination..aura_points.. all in the table itself. No other information should be given outside the table. Not even in the start of the response.
-    Do not give any other information other than the table.
-    
+
+    Create a detailed comparison table. For each attribute, provide a short label followed by " - " and then a brief explanation.
+
+    Do not give any other information other than the table as the table is the only output required!! remember this.
+
+    Format as a markdown table with these exact attributes:
+    | ATTRIBUTES | @${auraUser} | @${auraSubject} |
+    |------------|--------------|-----------------|
+    | Energy Level | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Engagement Style | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Content Quality | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Interaction Level | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Community Vibes | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Influence Level | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Authenticity | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Consistency | [Label] - [Explanation] | [Label] - [Explanation] |
+    | Adaptability | [Label] - [Explanation] | [Label] - [Explanation] |
+
+    Example format for each cell:
+    "High - Frequently posts and engages with community"
+    "Collaborative - Actively seeks feedback and interaction"
+
     Posts by @${auraUser}:
     ${userPosts.results.map(p => `${p.text}`).join('\n')}
 
     Posts by @${auraSubject}:
     ${subjectPosts.results.map(p => `${p.text}`).join('\n')}`
 
-    console.log("System: ", system)
-
-    let selectedModel: LanguageModelV1;
-
-    const provider = model.split(":")[0]
-
-    if (provider === "deepseek") {
-        selectedModel = deepseek(model.split(":")[1])
-    } else {
-        selectedModel = enhancedModel
-    }
-
     const response = streamText({
-        model: selectedModel,
+        model: enhancedModel,
         system,
         messages: convertToCoreMessages(messages),
+        temperature: 0,
         onChunk(event) {
             if (event.chunk.type === "reasoning") {
                 console.log(event.chunk.textDelta);

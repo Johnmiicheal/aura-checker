@@ -1,11 +1,21 @@
 import './globals.css'
-import { GeistSans } from 'geist/font/sans'
+import { Inter } from 'next/font/google'
 import { Analytics } from "@vercel/analytics/react"
 import { Toaster } from "react-hot-toast"
+import GradientBackground from '@/components/GradientBackground'
+import type { Metadata, Viewport } from 'next'
 
-export const metadata = {
+const inter = Inter({ subsets: ['latin'], weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'] })
+
+
+export const metadata: Metadata = {
+  metadataBase: new URL('https://check-aura.vercel.app'),
   title: 'Aura Checker',
   description: 'Get a vibe check on two Twitter users',
+}
+ 
+export const viewport: Viewport = {
+  themeColor: '#141720',
 }
 
 export default function RootLayout({
@@ -15,9 +25,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${GeistSans.className} min-h-screen bg-black`}>
+      <body className={`${inter.className} min-h-screen w-screen overflow-x-hidden bg-black`}>
         <Toaster position="top-center" />
-        {children}
+        <GradientBackground>
+          {children}
+        </GradientBackground>
         <Analytics />
       </body>
     </html>
